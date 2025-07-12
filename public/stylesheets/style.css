@@ -387,14 +387,9 @@ body {
     color: var(--accent-active);
 }
 
-/* Para el botón de búsqueda */
-#send-btn {
-    color: #ffffff80;
-}
-
-#user-input:not(:placeholder-shown)~#send-btn {
+/* #user-input:not(:placeholder-shown)~#send-btn {
     color: var(--text-primary);
-}
+} */
 
 /* Menú de subida de archivos */
 .upload-menu-panel {

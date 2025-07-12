@@ -17,20 +17,20 @@
 
     <!-- Highlight.js CDN (Para resaltado de sintaxis) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
-    <!-- Marked.js CDN (Para renderizado de Markdown) -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 </head>
 <body>
 
 <div class="d-flex vh-100">
     <!-- ================================== SIDEBAR ================================== -->
     <nav id="sidebar" class="d-flex flex-column p-3">
-        <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+        <!-- <a href="/" class="d-flex align-items-center text-white text-decoration-none">
             <span class="fs-4">Kipux AI</span>
-        </a>
-        <hr>
-        <button id="new-chat-btn" class="btn btn-outline-light w-100 mb-3"><i class="bi bi-plus-lg"></i> Nuevo Chat</button>
+        </a> -->
+        <h2 class="">Kipux AI</h2>
+        <!-- <hr> -->
+        <button id="new-chat-btn" class="btn btn-outline-light w-100 mb-3"><i class="bi bi-chat-square-text-fill"></i> Nuevo Chat</button>
+       
         <div class="flex-grow-1 overflow-auto">
             <h6 class="text-muted small text-uppercase">Conversaciones</h6>
             <ul class="nav nav-pills flex-column mb-auto" id="chat-history">
@@ -73,7 +73,7 @@
         <!-- Chat Area -->
         <div id="chat-area" class="flex-grow-1 d-flex flex-column">
             <div id="initial-view" class="text-center">
-                <h1 class="display-4">Buenas tardes, <%= user.name %></h1>
+                <h2 class="display-4">Hola, <%= user.name %></h2>
                 <p class="lead text-muted">¿Cómo puedo ayudarte hoy?</p>
             </div>
             <div id="chat-box" class="w-100 h-100 overflow-auto p-3"></div>
@@ -85,13 +85,13 @@
                     <div id="upload-menu" class="upload-menu-panel shadow">
                         <a href="#" class="upload-item" data-action="upload-doc"><i class="bi bi-paperclip me-2"></i>Subir documento</a>
                         <a href="#" class="upload-item" data-action="upload-img"><i class="bi bi-image me-2"></i>Subir imagen</a>
+                        <a href="#" class="upload-item" data-action="upload-aud"><i class="bi bi-play me-2"></i>Subir audio</a>
                     </div>
                     <!-- Input principal con botones -->
                     <div class="input-group">
                         <button class="btn" type="button" id="upload-btn"><i class="bi bi-plus-lg"></i></button>
                         <input type="text" id="user-input" class="form-control" placeholder="Escribe tu mensaje aquí..." autocomplete="off">
-                        <button class="btn" type="button" id="web-search-btn" title="Búsqueda en la Web"><i class="bi bi-search"></i></button>
-                        <button class="btn" type="submit" id="send-btn"><i class="bi bi-send"></i></button>
+                        <button class="btn" type="submit" id="send-btn"><i class="bi bi-arrow-up-circle-fill"></i></button>
                     </div>
                 </form>
                 <!-- Input oculto para la subida de archivos -->
@@ -114,38 +114,14 @@
                 <div class="row">
                     <div class="col-md-4">
                         <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist">
-                            <button class="nav-link active text-start" data-bs-toggle="pill" data-bs-target="#v-pills-general"><i class="bi bi-gear-fill me-2"></i>General</button>
-                            <!-- <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#v-pills-model"><i class="bi bi-robot me-2"></i>Modelo</button> -->
-                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#v-pills-account"><i class="bi bi-person-fill me-2"></i>Conexión</button>
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#v-pills-account"><i class="bi bi-server me-2"></i>Conexión</button>
                             <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#v-pills-profile"><i class="bi bi-person-badge me-2"></i>Perfil</button>
                         </div>
                     </div>
                     <div class="col-md-8">
                         <div class="tab-content" id="v-pills-tabContent">
-                            <div class="tab-pane fade show active" id="v-pills-general">
-                                <h6>Configuración de la WebUI</h6><hr>
-                                <div class="mb-3 d-flex justify-content-between align-items-center">
-                                    <label class="form-label mb-0">Tema</label>
-                                    <div id="theme-selector" class="btn-group btn-group-sm">
-                                        <input type="radio" class="btn-check" name="theme" id="theme-system" value="system"><label class="btn btn-outline-secondary" for="theme-system">Sistema</label>
-                                        <input type="radio" class="btn-check" name="theme" id="theme-dark" value="dark"><label class="btn btn-outline-secondary" for="theme-dark">Oscuro</label>
-                                        <input type="radio" class="btn-check" name="theme" id="theme-light" value="light"><label class="btn btn-outline-secondary" for="theme-light">Claro</label>
-                                    </div>
-                                </div>
-                                <div class="mb-3 d-flex justify-content-between align-items-center">
-                                    <label class="form-label mb-0">Notificaciones</label>
-                                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="notifications-switch"></div>
-                                </div>
-                            </div>
-                            <!-- <div class="tab-pane fade" id="v-pills-model">
-                                <h6>Configuración del Modelo</h6><hr>
-                                <div class="mb-3">
-                                    <label for="default-model-select" class="form-label">Modelo por Defecto</label>
-                                    <select class="form-select" id="default-model-select"></select>
-                                </div>
-                            </div> -->
-                            <div class="tab-pane fade" id="v-pills-account">
-                                <h6>Configuración de Conexión</h6><hr>
+                           
+                            <div class="tab-pane fade show active" id="v-pills-account">
                                 <div class="mb-3">
                                     <label for="liteLLMUrl" class="form-label">URL de LiteLLM</label>
                                     <input type="text" class="form-control" id="liteLLMUrl" placeholder="http://localhost:4000">
@@ -156,7 +132,6 @@
                                 </div>
                             </div>
                             <div class="tab-pane fade" id="v-pills-profile">
-                                <h6>Tu Perfil</h6><hr>
                                 <form id="profile-form" action="/profile" method="post">
                                     <div class="mb-3">
                                         <label for="profile-name" class="form-label">Nombre</label>
@@ -185,6 +160,11 @@
 </div>
 
 <!-- SCRIPTS -->
+
+<!-- Marked.js CDN (Para renderizado de Markdown) -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <!-- Highlight.js (resaltado de sintaxis) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <!-- Lenguajes comunes para Highlight.js -->
@@ -195,6 +175,7 @@
 <!-- Bootstrap JS Bundle -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Custom JS -->
+ <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@25.3.1/build/js/intlTelInput.min.js"></script>
 <script>
     // Pasar datos del servidor al cliente de forma segura
     const serverData = {

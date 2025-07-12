@@ -1,5 +1,6 @@
 {
   "name": "kipux-ai-app",
+  "description": "pagina web para un chatbot con IA",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -16,14 +17,12 @@
     "dotenv": "^17.2.0",
     "ejs": "~2.6.1",
     "express": "~4.16.1",
-    "express-ejs-layouts": "^2.5.1",
     "express-session": "^1.18.1",
     "http-errors": "~1.6.3",
     "morgan": "~1.9.1",
     "node-fetch": "^3.3.2",
     "prisma": "^6.11.1",
-    "redis": "^5.6.0",
-    "socket.io": "^4.8.1"
+    "redis": "^5.6.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
