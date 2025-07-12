@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - Kipux AI</title>
+    <!-- Google Font: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/stylesheets/style.css">
+
+    <!-- Highlight.js CDN (Para resaltado de sintaxis) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <!-- Marked.js CDN (Para renderizado de Markdown) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+<div class="d-flex vh-100">
+    <!-- ================================== SIDEBAR ================================== -->
+    <nav id="sidebar" class="d-flex flex-column p-3">
+        <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+            <span class="fs-4">Kipux AI</span>
+        </a>
+        <hr>
+        <button id="new-chat-btn" class="btn btn-outline-light w-100 mb-3"><i class="bi bi-plus-lg"></i> Nuevo Chat</button>
+        <div class="flex-grow-1 overflow-auto">
+            <h6 class="text-muted small text-uppercase">Conversaciones</h6>
+            <ul class="nav nav-pills flex-column mb-auto" id="chat-history">
+                <!-- Historial de chats -->
+            </ul>
+        </div>
+        <hr>
+        <div class="dropdown">
+            <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="bi bi-person-circle fs-4 me-2"></i>
+                <% if (typeof user !== 'undefined') { %>
+                    <strong id="user-email"><%= user.name %></strong>
+                <% } else { %>
+                    <strong id="user-email">Invitado</strong>
+                <% } %>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-dark text-small shadow">
+                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#settingsModal">Configuración</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <% if (typeof user !== 'undefined') { %>
+                    <li><a class="dropdown-item" href="/logout">Cerrar sesión</a></li>
+                <% } else { %>
+                    <li><a class="dropdown-item" href="/login">Iniciar sesión</a></li>
+                <% } %>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- ================================== MAIN CONTENT ================================== -->
+    <main id="main-content" class="d-flex flex-column flex-grow-1 position-relative">
+        <!-- Header -->
+        <header class="d-flex align-items-center p-2 border-bottom">
+            <button id="sidebar-toggle" class="btn btn-dark me-3"><i class="bi bi-list"></i></button>
+            <div id="model-selector-container" class="position-relative">
+                 <button class="btn btn-dark dropdown-toggle" type="button" id="model-selector-btn">Seleccionando modelo...</button>
+                <div id="model-popover" class="model-popover-panel shadow"></div>
+            </div>
+        </header>
+
+        <!-- Chat Area -->
+        <div id="chat-area" class="flex-grow-1 d-flex flex-column">
+            <div id="initial-view" class="text-center">
+                <h1 class="display-4">Buenas tardes, <%= user.name %></h1>
+                <p class="lead text-muted">¿Cómo puedo ayudarte hoy?</p>
+            </div>
+            <div id="chat-box" class="w-100 h-100 overflow-auto p-3"></div>
+
+            <!-- Formulario de Input Avanzado -->
+            <div id="chat-form-container" class="w-100 p-3">
+                <form id="chat-form" class="mx-auto position-relative">
+                     <!-- Menú de Subida (Controlado por JS) -->
+                    <div id="upload-menu" class="upload-menu-panel shadow">
+                        <a href="#" class="upload-item" data-action="upload-doc"><i class="bi bi-paperclip me-2"></i>Subir documento</a>
+                        <a href="#" class="upload-item" data-action="upload-img"><i class="bi bi-image me-2"></i>Subir imagen</a>
+                    </div>
+                    <!-- Input principal con botones -->
+                    <div class="input-group">
+                        <button class="btn" type="button" id="upload-btn"><i class="bi bi-plus-lg"></i></button>
+                        <input type="text" id="user-input" class="form-control" placeholder="Escribe tu mensaje aquí..." autocomplete="off">
+                        <button class="btn" type="button" id="web-search-btn" title="Búsqueda en la Web"><i class="bi bi-search"></i></button>
+                        <button class="btn" type="submit" id="send-btn"><i class="bi bi-send"></i></button>
+                    </div>
+                </form>
+                <!-- Input oculto para la subida de archivos -->
+                <input type="file" id="file-input" class="d-none">
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- ================================== MODAL DE CONFIGURACIÓN AVANZADO ================================== -->
+<div class="modal fade" id="settingsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Configuración</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist">
+                            <button class="nav-link active text-start" data-bs-toggle="pill" data-bs-target="#v-pills-general"><i class="bi bi-gear-fill me-2"></i>General</button>
+                            <!-- <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#v-pills-model"><i class="bi bi-robot me-2"></i>Modelo</button> -->
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#v-pills-account"><i class="bi bi-person-fill me-2"></i>Conexión</button>
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#v-pills-profile"><i class="bi bi-person-badge me-2"></i>Perfil</button>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="tab-content" id="v-pills-tabContent">
+                            <div class="tab-pane fade show active" id="v-pills-general">
+                                <h6>Configuración de la WebUI</h6><hr>
+                                <div class="mb-3 d-flex justify-content-between align-items-center">
+                                    <label class="form-label mb-0">Tema</label>
+                                    <div id="theme-selector" class="btn-group btn-group-sm">
+                                        <input type="radio" class="btn-check" name="theme" id="theme-system" value="system"><label class="btn btn-outline-secondary" for="theme-system">Sistema</label>
+                                        <input type="radio" class="btn-check" name="theme" id="theme-dark" value="dark"><label class="btn btn-outline-secondary" for="theme-dark">Oscuro</label>
+                                        <input type="radio" class="btn-check" name="theme" id="theme-light" value="light"><label class="btn btn-outline-secondary" for="theme-light">Claro</label>
+                                    </div>
+                                </div>
+                                <div class="mb-3 d-flex justify-content-between align-items-center">
+                                    <label class="form-label mb-0">Notificaciones</label>
+                                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="notifications-switch"></div>
+                                </div>
+                            </div>
+                            <!-- <div class="tab-pane fade" id="v-pills-model">
+                                <h6>Configuración del Modelo</h6><hr>
+                                <div class="mb-3">
+                                    <label for="default-model-select" class="form-label">Modelo por Defecto</label>
+                                    <select class="form-select" id="default-model-select"></select>
+                                </div>
+                            </div> -->
+                            <div class="tab-pane fade" id="v-pills-account">
+                                <h6>Configuración de Conexión</h6><hr>
+                                <div class="mb-3">
+                                    <label for="liteLLMUrl" class="form-label">URL de LiteLLM</label>
+                                    <input type="text" class="form-control" id="liteLLMUrl" placeholder="http://localhost:4000">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="apiKey" class="form-label">API Key</label>
+                                    <input type="password" class="form-control" id="apiKey" placeholder="sk-..."><div class="form-text">Tu clave se guarda de forma segura en tu navegador.</div>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="v-pills-profile">
+                                <h6>Tu Perfil</h6><hr>
+                                <form id="profile-form" action="/profile" method="post">
+                                    <div class="mb-3">
+                                        <label for="profile-name" class="form-label">Nombre</label>
+                                        <input type="text" class="form-control" id="profile-name" name="name" value="<%= user.name %>">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="profile-email" class="form-label">Correo Electrónico</label>
+                                        <input type="email" class="form-control" id="profile-email" name="email" value="<%= user.email %>" readonly>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="profile-password" class="form-label">Nueva Contraseña</label>
+                                        <input type="password" class="form-control" id="profile-password" name="password" placeholder="Dejar en blanco para no cambiar">
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" id="save-settings-btn">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SCRIPTS -->
+<!-- Highlight.js (resaltado de sintaxis) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<!-- Lenguajes comunes para Highlight.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
+<!-- Bootstrap JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Custom JS -->
+<script>
+    // Pasar datos del servidor al cliente de forma segura
+    const serverData = {
+        userSettings: {
+            apiKey: "<%= user.apiKey || '' %>",
+            liteLLMUrl: "<%= user.liteLLMUrl || '' %>",
+            theme: "<%= user.theme || 'system' %>",
+            defaultModel: "<%= user.defaultModel || 'gpt-4o-mini' %>"
+        }
+    };
+</script>
+<script src="/javascripts/script.js"></script>
+</body>
+</html>

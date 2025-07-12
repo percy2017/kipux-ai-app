@@ -113,11 +113,20 @@ body {
 
 .model-item .model-title {
     font-weight: 500;
+    margin-bottom: 0.25rem;
 }
 
 .model-item .model-desc {
     font-size: 0.8rem;
     color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.model-item small {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    line-height: 1.2;
 }
 
 /* --- 4. CHAT AREA --- */
@@ -141,6 +150,7 @@ body {
     overflow-y: auto;
     padding: 20px;
     display: none;
+    flex-direction: column;
 }
 
 #chat-form-container {
@@ -159,62 +169,98 @@ body {
 }
 
 #chat-area.chat-started #chat-box {
-    display: block;
+    display: flex;
 }
 
 /* --- 5. MENSAJES --- */
 .message-wrapper {
+    max-width: 85%;
+    margin-bottom: 20px;
     display: flex;
     flex-direction: column;
-    margin-bottom: 20px;
-}
-
-.message-content {
-    display: flex;
-}
-
-.message {
-    padding: 8px 12px;
-    border-radius: 8px;
-    max-width: 85%;
-    position: relative;
-    word-wrap: break-word;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-bot-message);
 }
 
 .message-wrapper.user {
-    align-items: flex-end;
+    align-self: flex-end;
+    background-color: var(--bg-user-message);
+    border-color: var(--bg-user-message);
 }
 
 .message-wrapper.bot {
-    align-items: flex-start;
+    align-self: flex-start;
 }
 
-.message.user {
-    background-color: var(--bg-user-message);
-    color: white;
+.message-header {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
 }
 
-.message.bot {
-    background-color: var(--bg-bot-message);
+.message-header i {
+    margin-right: 8px;
+    font-size: 1.1rem;
+}
+
+.model-name-tag {
+    background-color: var(--bg-input);
     color: var(--text-secondary);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    margin-left: 8px;
+    font-weight: 500;
 }
 
-.message::before {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    width: 20px;
-    height: 25px;
+.message-content {
+    padding-left: 28px; /* Alineado con el texto del header */
 }
 
-.message.user::before {
-    right: -10px;
-    background: radial-gradient(circle at 0 0, transparent 20px, var(--bg-user-message) 20px);
+.message {
+    word-wrap: break-word;
+    line-height: 1.6;
 }
 
-.message.bot::before {
-    left: -10px;
-    background: radial-gradient(circle at 100% 0, transparent 20px, var(--bg-bot-message) 20px);
+.message-wrapper.user .message-content {
+    padding-left: 0; /* El mensaje de usuario no necesita indentación */
+}
+
+.message-wrapper.user .message-header {
+    color: #e9f5f3; /* Un color más claro para el header sobre el fondo verde */
+}
+
+.message-wrapper.user .message {
+    color: white;
+    /* El fondo ahora está en el wrapper, así que aquí no se necesita */
+}
+
+.message-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+    padding-left: 28px;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+.message-stats {
+    display: flex;
+    gap: 1rem;
+}
+
+.message-stats span {
+    display: flex;
+    align-items: center;
+}
+
+.message-stats i {
+    margin-right: 4px;
 }
 
 /* --- 6. BARRA DE ACCIONES DEL BOT --- */
@@ -240,6 +286,74 @@ body {
 
 .action-btn:hover {
     color: var(--text-primary);
+}
+
+.json-response-container {
+    margin-top: 10px;
+    width: 100%;
+}
+
+.json-response-container .code-block {
+    background-color: #282c34;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.json-response-container .code-header {
+    background-color: #21252b;
+    padding: 0.5rem 1rem;
+    font-size: 0.8em;
+    color: var(--text-secondary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.json-response-container pre {
+    margin: 0;
+    padding: 1rem;
+}
+
+.json-response-container pre code.hljs {
+    padding: 0;
+    background: transparent;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+    font-size: 0.9em;
+}
+
+.json-response-container {
+    margin-top: 10px;
+    width: 100%;
+}
+
+.json-response-container .code-block {
+    background-color: #282c34;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.json-response-container .code-header {
+    background-color: #21252b;
+    padding: 0.5rem 1rem;
+    font-size: 0.8em;
+    color: var(--text-secondary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.json-response-container pre {
+    margin: 0;
+    padding: 1rem;
+}
+
+.json-response-container pre code.hljs {
+    padding: 0;
+    background: transparent;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+    font-size: 0.9em;
 }
 
 /* --- 7. INPUT FORM AVANZADO --- */
