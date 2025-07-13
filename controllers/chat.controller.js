@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export const saveMessage = async (req, res) => {
-    const { chatId, role, content } = req.body;
+    const { chatId, role, content, metadata } = req.body;
     const userId = req.session.user ? req.session.user.id : null; // Asumiendo que el ID del usuario está en la sesión
 
     if (!chatId || !role || !content) {
@@ -14,6 +14,7 @@ export const saveMessage = async (req, res) => {
         const dataToCreate = {
             role: role,
             content: content,
+            metadata: metadata,
             conversation: {
                 connect: { id: parseInt(chatId, 10) }
             }

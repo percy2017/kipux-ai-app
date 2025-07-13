@@ -45,7 +45,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentChatId = null;
   let availableModels = [];
   let appSettings = {};
-  let isWebSearchEnabled = false;
   let thinkingAbortController = null;
 
   // =================================================================================
@@ -58,7 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderChatHistory();
     fetchAndRenderModels();
     setupEventListeners();
-    chatArea.classList.remove("chat-started");
+    // chatArea.classList.remove("chat-started");
   };
 
   const loadSettings = () => {
@@ -137,7 +136,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // =================================================================================
-  //  3. GESTIÓN DE CONVERSACIONES (INCLUYE REGENERAR)
+  //  3. GESTIÓN DE CONVERSACIONES
   // =================================================================================
 
   const loadConversations = async () => {
@@ -146,6 +145,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!response.ok)
         throw new Error("Error al cargar conversaciones desde DB.");
       const data = await response.json();
+      // console.log(data)
       conversations = {};
       data.forEach((conv) => {
         conversations[conv.id] = {
@@ -154,6 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
           messages: conv.messages.map((msg) => ({
             role: msg.role,
             content: msg.content,
+            metadata: msg.metadata
           })),
         };
       });
@@ -168,23 +169,23 @@ document.addEventListener("DOMContentLoaded", () => {
           const latestChatId = Object.keys(conversations).sort(
             (a, b) => b - a
           )[0];
-          currentChatId = latestChatId;
+          // currentChatId = latestChatId;
         }
-        displayConversation(currentChatId);
+        // displayConversation(currentChatId);
       }
     } catch (error) {
       console.error("Error al cargar conversaciones:", error);
       // Si falla la carga de DB y no hay conversaciones, asegurar que no haya un chat actual
-      if (Object.keys(conversations).length === 0) {
-        currentChatId = null;
-        chatArea.classList.remove("chat-started");
-      } else {
-        const latestChatId = Object.keys(conversations).sort(
-          (a, b) => b - a
-        )[0];
-        currentChatId = latestChatId;
-        displayConversation(currentChatId);
-      }
+      // if (Object.keys(conversations).length === 0) {
+      //   currentChatId = null;
+      //   chatArea.classList.remove("chat-started");
+      // } else {
+      //   const latestChatId = Object.keys(conversations).sort(
+      //     (a, b) => b - a
+      //   )[0];
+      //   currentChatId = latestChatId;
+      //   displayConversation(currentChatId);
+      // }
     }
   };
 
@@ -206,26 +207,12 @@ document.addEventListener("DOMContentLoaded", () => {
     chatBox.innerHTML = "";
     if (conversations[chatId]) {
       conversations[chatId].messages.forEach((msg, index) => {
-        addMessageToUI(msg.role, msg.content, index);
+        addMessageToUI(msg.role, msg.content, index, msg.metadata);
       });
     }
     chatArea.classList.add("chat-started");
     renderChatHistory();
     userInput.focus();
-  };
-
-  const regenerateLastResponse = async (messageIndex) => {
-    if (!currentChatId || thinkingAbortController) return;
-
-    // Eliminar la última respuesta del bot del historial de mensajes
-    conversations[currentChatId].messages.splice(messageIndex);
-    // No es necesario guardar el último mensaje del usuario de nuevo, ya está en la DB
-
-    // Volver a renderizar la conversación sin la última respuesta
-    await displayConversation(currentChatId);
-
-    // Reenviar la última pregunta del usuario
-    handleFormSubmit();
   };
 
   const saveMessageToDB = async (chatId, role, content, metadata) => {
@@ -272,6 +259,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const addMessageToUI = (sender, text, messageIndex, rawData = null) => {
+    console.log(rawData)
     const wrapper = document.createElement("div");
     wrapper.classList.add("message-wrapper", sender);
     wrapper.dataset.index = messageIndex;
@@ -437,7 +425,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const displayFilteredModels =  (models, container) => {
       container.innerHTML = "";
-      console.log(models)
+      // console.log(models)
       models.forEach(async (model) => {
         if (model.model_info.mode =="chat") {
         
@@ -458,84 +446,51 @@ document.addEventListener("DOMContentLoaded", () => {
     displayFilteredModels(modelsToRender, modelItemsContainer);
   };
 
-  const handleFormSubmit = async (isRegeneration = false) => {
-    if (!isRegeneration) {
-      const messageText = userInput.value.trim();
-      if (!messageText) {
-        // Guardar un mensaje de prueba si el input está vacío
-        const testMessage = "Mensaje de prueba";
-        const testMetadata = {
-          model: appSettings.defaultModel,
-          responseTime: 0,
-          inputTokens: testMessage.split(" ").length,
-          outputTokens: 0,
-          totalTokens: testMessage.split(" ").length,
-        };
-        await saveMessageToDB(currentChatId, "user", testMessage, testMetadata);
-        return;
-      }
-      let prompt = messageText;
-
-      // Si no hay chat actual, o si el chat actual no tiene mensajes (es un chat nuevo sin interacción),
-      // crear una nueva conversación en la DB.
-      if (
-        !currentChatId ||
-        !conversations[currentChatId] ||
-        conversations[currentChatId].messages.length === 0
-      ) {
-        const response = await fetch("/chat/conversation", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: "Nuevo Chat" }), // Título temporal
-        });
-        if (!response.ok)
-          throw new Error("Error al crear nueva conversación en DB.");
-        const newConversation = await response.json();
-        currentChatId = newConversation.id;
-        conversations[currentChatId] = {
-          id: newConversation.id,
-          title: newConversation.title,
-          messages: [],
-        };
-        displayConversation(currentChatId); // Mostrar el nuevo chat en la UI
-      }
-
-      addMessageToUI(
-        "user",
-        prompt,
-        conversations[currentChatId].messages.length
-      );
-      conversations[currentChatId].messages.push({
-        role: "user",
-        content: prompt,
+ const handleFormSubmit = async () => {
+  const messageContent = userInput.value.trim();  
+  if (!messageContent) return; // No enviar mensajes vacíos
+  thinkingAbortController = new AbortController();
+  const thinkingMessage = document.createElement("div");
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${appSettings.apiKey}`,
+  };
+  userInput.value = "";
+  console.log(currentChatId)
+  try {
+    if (currentChatId == null) {
+      // Nuevo chat
+      // console.log("creando chat...")
+      let response = await fetch("/chat/conversation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: "Nuevo Chat" }),
       });
-      await saveMessageToDB(currentChatId, "user", prompt, {
-        model: appSettings.defaultModel,
-        responseTime: 0, // Aquí puedes calcular el tiempo de respuesta real
-        inputTokens: prompt.split(" ").length, // Ejemplo de conteo de tokens
-        outputTokens: 0, // Inicialmente 0, se actualizará después
-        totalTokens: prompt.split(" ").length, // Inicialmente igual a inputTokens
-      }); // Guardar mensaje del usuario en DB
-      userInput.value = "";
-    }
-
-    const thinkingMessage = document.createElement("div");
-    thinkingMessage.className = "message-wrapper bot";
-    thinkingMessage.innerHTML =
-      '<div class="message bot thinking">Kipux está pensando...</div>';
-    chatBox.appendChild(thinkingMessage);
-    chatBox.scrollTop = chatBox.scrollHeight;
-
-    try {
-      if (!appSettings.apiKey || !appSettings.liteLLMUrl)
-        throw new Error("Por favor, configura la URL y la API Key.");
-      thinkingAbortController = new AbortController();
-      const headers = {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${appSettings.apiKey}`,
+      const newConversation = await response.json();
+      // console.log(newConversation)
+      currentChatId = newConversation.id;
+      conversations[currentChatId] = {
+        id: newConversation.id,
+        title: newConversation.title,
+        messages: [{
+          role: "user",
+          content: messageContent,
+        }],
       };
-      const response = await fetch(
-        `${appSettings.liteLLMUrl}/chat/completions`,
+      displayConversation(currentChatId)
+      await saveMessageToDB(currentChatId, "user", messageContent, {
+        model: appSettings.defaultModel,
+        date: Date.now(), 
+      });
+      
+      // ia--------
+      thinkingMessage.className = "message-wrapper bot";
+      thinkingMessage.innerHTML =
+        '<div class="message bot thinking">Kipux está pensando...</div>';
+      chatBox.appendChild(thinkingMessage);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      response = await fetch(`${appSettings.liteLLMUrl}/chat/completions`,
         {
           method: "POST",
           headers,
@@ -546,60 +501,64 @@ document.addEventListener("DOMContentLoaded", () => {
           }),
         }
       );
-      if (!response.ok)
-        throw new Error(
-          `Error de API: ${response.statusText} (${response.status})`
-        );
       const data = await response.json();
-      console.log("Respuesta completa del modelo:", data);
-      const botReply = data.choices[0].message.content;
-
-      // Si es la primera respuesta del bot en un nuevo chat, actualizar el título
-      // Esto se ejecuta después de que el usuario ha enviado su primer mensaje y el bot ha respondido.
-      if (conversations[currentChatId].messages.length === 1) {
-        // Solo el mensaje del usuario está presente
-        const newTitle = conversations[
-          currentChatId
-        ].messages[0].content.substring(0, 30);
-        conversations[currentChatId].title = newTitle;
-        try {
-          await fetch(`/chat/conversation/${currentChatId}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ title: newTitle }),
-          });
-          renderChatHistory(); // Volver a renderizar para mostrar el nuevo título en el sidebar
-        } catch (error) {
-          console.error("Error al actualizar título de conversación:", error);
-        }
-      }
-
-      if (thinkingMessage && chatBox.contains(thinkingMessage)) {
-        chatBox.removeChild(thinkingMessage);
-      }
-      const botMessageIndex = conversations[currentChatId].messages.length;
-      addMessageToUI("assistant", botReply, botMessageIndex, data);
+      // console.log(data)
+      await saveMessageToDB(currentChatId, "assistant", data.choices[0].message.content, data.usage);
+      await fetch(`/chat/conversation/${currentChatId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: data.choices[0].message.content }),
+      });
+      conversations[currentChatId].title = data.choices[0].message.content;
       conversations[currentChatId].messages.push({
         role: "assistant",
-        content: botReply,
+        content: data.choices[0].message.content,
       });
-      await saveMessageToDB(currentChatId, "assistant", botReply);
-      // renderChatHistory() ya se llama si se actualiza el título, no es necesario aquí de nuevo
-    } catch (error) {
-      if (error.name === "AbortError") console.log("Fetch abortado.");
-      else {
-        console.error(error);
-        chatBox.removeChild(thinkingMessage);
-        addMessageToUI(
-          "assistant",
-          `Lo siento, ocurrió un error: ${error.message}`,
-          -1
-        );
-      }
-    } finally {
-      thinkingAbortController = null;
+      displayConversation(currentChatId)
+      renderChatHistory()
+    } else {
+      // Chat existente
+      conversations[currentChatId].messages.push({
+        role: "user",
+        content: messageContent,
+      });
+      displayConversation(currentChatId)
+      await saveMessageToDB(currentChatId, "user", messageContent, {
+        model: appSettings.defaultModel,
+        date: Date.now(), 
+      });
+
+      thinkingMessage.className = "message-wrapper bot";
+      thinkingMessage.innerHTML =
+        '<div class="message bot thinking">Kipux está pensando...</div>';
+      chatBox.appendChild(thinkingMessage);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      console.log(conversations[currentChatId].messages)
+      response = await fetch(`${appSettings.liteLLMUrl}/chat/completions`,
+        {
+          method: "POST",
+          headers,
+          signal: thinkingAbortController.signal,
+          body: JSON.stringify({
+            model: appSettings.defaultModel,
+            messages: conversations[currentChatId].messages,
+          }),
+        }
+      );
+      const data = await response.json();
+      await saveMessageToDB(currentChatId, "assistant", data.choices[0].message.content, data.usage);
+      conversations[currentChatId].messages.push({
+        role: "assistant",
+        content: data.choices[0].message.content,
+      });
+      displayConversation(currentChatId)
     }
-  };
+  } catch (error) {
+    console.error("Error al enviar mensaje:", error);
+  }
+};
+
 
   // =================================================================================
   //  6. EVENT LISTENERS
@@ -732,7 +691,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    // --- Otros Listeners (sin cambios mayores)
+    // --- Otros Listeners
     modelSelectorBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       modelPopover.style.display =
