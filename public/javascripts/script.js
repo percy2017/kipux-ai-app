@@ -473,118 +473,193 @@ const searchToggleButton = document.getElementById("search-toggle-btn");
     displayFilteredModels(modelsToRender, modelItemsContainer);
   };
 
- const handleFormSubmit = async () => {
-  const messageContent = userInput.value.trim();  
-  if (!messageContent) return; // No enviar mensajes vacíos
-  thinkingAbortController = new AbortController();
-  const thinkingMessage = document.createElement("div");
-  const headers = {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${appSettings.apiKey}`,
-  };
-  userInput.value = "";
-  console.log(currentChatId)
-  try {
-    if (currentChatId == null) {
-      // Nuevo chat
-      // console.log("creando chat...")
-      let response = await fetch("/chat/conversation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: "Nuevo Chat" }),
-      });
-      const newConversation = await response.json();
-      // console.log(newConversation)
-      currentChatId = newConversation.id;
-      conversations[currentChatId] = {
-        id: newConversation.id,
-        title: newConversation.title,
-        messages: [{
-          role: "user",
-          content: messageContent,
-        }],
-      };
-      displayConversation(currentChatId)
-      await saveMessageToDB(currentChatId, "user", messageContent, {
-        model: appSettings.defaultModel,
-        date: Date.now(), 
-      });
-      
-      // ia--------
-      thinkingMessage.className = "message-wrapper bot";
-      thinkingMessage.innerHTML =
-        '<div class="message bot thinking">Kipux está pensando...</div>';
-      chatBox.appendChild(thinkingMessage);
-      chatBox.scrollTop = chatBox.scrollHeight;
+  async function performWebSearch(query) {
+    // IMPORTANTE: Esta URL es temporal. Idealmente, debería venir de la configuración del servidor.
+    const SEARXNG_URL = "https://searxng.percyalvarez.com"; 
 
-      response = await fetch(`${appSettings.liteLLMUrl}/chat/completions`,
-        {
-          method: "POST",
-          headers,
-          signal: thinkingAbortController.signal,
-          body: JSON.stringify({
-            model: appSettings.defaultModel,
-            messages: conversations[currentChatId].messages,
-          }),
+    console.log(`[WebSearch] Iniciando búsqueda para: "${query}"`);
+    try {
+        const searchUrl = `${SEARXNG_URL}/search?q=${encodeURIComponent(query)}&format=json`;
+        console.log(searchUrl)
+        const response = await fetch(searchUrl);
+
+        // Si la llamada a SearXNG falla por CORS, necesitarás configurar SearXNG.
+        if (!response.ok) {
+            throw new Error(`Error en la respuesta de SearXNG: ${response.statusText}`);
         }
-      );
-      const data = await response.json();
-      // console.log(data)
-      await saveMessageToDB(currentChatId, "assistant", data.choices[0].message.content, data.usage);
-      await fetch(`/chat/conversation/${currentChatId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: data.choices[0].message.content }),
-      });
-      conversations[currentChatId].title = data.choices[0].message.content;
-      conversations[currentChatId].messages.push({
-        role: "assistant",
-        content: data.choices[0].message.content,
-      });
-      displayConversation(currentChatId)
-      renderChatHistory()
-    } else {
-      // Chat existente
-      conversations[currentChatId].messages.push({
-        role: "user",
-        content: messageContent,
-      });
-      displayConversation(currentChatId)
-      await saveMessageToDB(currentChatId, "user", messageContent, {
-        model: appSettings.defaultModel,
-        date: Date.now(), 
-      });
 
-      thinkingMessage.className = "message-wrapper bot";
-      thinkingMessage.innerHTML =
-        '<div class="message bot thinking">Kipux está pensando...</div>';
-      chatBox.appendChild(thinkingMessage);
-      chatBox.scrollTop = chatBox.scrollHeight;
+        const data = await response.json();
 
-      console.log(conversations[currentChatId].messages)
-      response = await fetch(`${appSettings.liteLLMUrl}/chat/completions`,
-        {
-          method: "POST",
-          headers,
-          signal: thinkingAbortController.signal,
-          body: JSON.stringify({
-            model: appSettings.defaultModel,
-            messages: conversations[currentChatId].messages,
-          }),
-        }
-      );
-      const data = await response.json();
-      await saveMessageToDB(currentChatId, "assistant", data.choices[0].message.content, data.usage);
-      conversations[currentChatId].messages.push({
-        role: "assistant",
-        content: data.choices[0].message.content,
-      });
-      displayConversation(currentChatId)
-    }
+        // Devolvemos los 5 primeros resultados o un array vacío si no hay nada.
+        return data.results?.slice(0, 5) || [];
+
     } catch (error) {
-      console.error("Error al enviar mensaje:", error);
+        console.error("[WebSearch] Falló la búsqueda web:", error);
+        // Informamos al usuario de forma no intrusiva.
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'warning',
+            title: 'Búsqueda web fallida',
+            text: 'Continuando sin contexto de internet.',
+            theme: 'dark',
+            showConfirmButton: false,
+            timer: 3500
+        });
+        // Devolvemos un array vacío para que la aplicación pueda continuar sin fallar.
+        return [];
     }
-  };
+  }
+
+  /**
+ * Obtiene una respuesta de la IA, realizando una búsqueda web si es necesario.
+ * @param {Array} messages - El historial de mensajes para enviar a la IA.
+ * @param {string} originalQuery - El mensaje original del usuario para la búsqueda.
+ * @returns {Promise<{data: object, sources: Array}>} - Un objeto con la respuesta de la IA y las fuentes de búsqueda.
+ */
+async function getAIResponse(messages, originalQuery) {
+    let finalMessagesForAPI = messages;
+    let searchSources = [];
+    const isSearchActive = searchToggleButton.classList.contains('active');
+
+    if (isSearchActive) {
+        console.log("Modo de búsqueda web: ACTIVADO");
+        const searchResults = await performWebSearch(originalQuery);
+
+        if (searchResults && searchResults.length > 0) {
+            console.log("Resultados de búsqueda obtenidos:", searchResults);
+            searchSources = searchResults.map(r => ({ title: r.title, url: r.url }));
+            
+            let searchContext = "Contexto de búsqueda web:\n\n";
+            searchResults.forEach((result, index) => {
+                searchContext += `[Fuente ${index + 1}]: ${result.title}\nURL: ${result.url}\nFragmento: ${result.content || 'N/A'}\n\n`;
+            });
+            
+            const finalPrompt = `${searchContext}Usando el contexto anterior, responde a la pregunta del usuario: "${originalQuery}"`;
+
+            // Creamos una copia temporal de los mensajes para no alterar el original
+            const tempMessages = JSON.parse(JSON.stringify(messages));
+            tempMessages[tempMessages.length - 1].content = finalPrompt;
+            finalMessagesForAPI = tempMessages;
+        }
+    }
+
+    // Realizamos la llamada a LiteLLM
+    const response = await fetch(`${appSettings.liteLLMUrl}/chat/completions`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${appSettings.apiKey}`,
+        },
+        signal: thinkingAbortController.signal,
+        body: JSON.stringify({
+            model: appSettings.defaultModel,
+            messages: finalMessagesForAPI,
+        }),
+    });
+
+    if (!response.ok) {
+        throw new Error('Error en la respuesta de la API de LiteLLM.');
+    }
+
+    const data = await response.json();
+    return { data, sources: searchSources };
+}
+
+const handleFormSubmit = async () => {
+    const messageContent = userInput.value.trim();
+    if (!messageContent) return;
+
+    thinkingAbortController = new AbortController();
+    userInput.value = "";
+
+    try {
+        // --- 1. CREAR CONVERSACIÓN SI ES NUEVA ---
+        if (currentChatId == null) {
+            const response = await fetch("/chat/conversation", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title: messageContent.substring(0, 40) + "..." }),
+            });
+            const newConversation = await response.json();
+            currentChatId = newConversation.id;
+            conversations[currentChatId] = {
+                id: newConversation.id,
+                title: newConversation.title,
+                messages: [], // Empezamos con mensajes vacíos
+            };
+            renderChatHistory(); // Mostramos el nuevo chat en la barra lateral
+        }
+        
+        // --- 2. AÑADIR MENSAJE DEL USUARIO (PARA AMBOS CASOS: NUEVO Y EXISTENTE) ---
+        conversations[currentChatId].messages.push({ role: "user", content: messageContent });
+        displayConversation(currentChatId); // Muestra el mensaje del usuario en la UI
+        await saveMessageToDB(currentChatId, "user", messageContent, { model: appSettings.defaultModel, date: Date.now() });
+
+        // --- 3. MOSTRAR "PENSANDO..." ---
+        const thinkingMessage = document.createElement("div");
+        thinkingMessage.className = "message-wrapper bot";
+        thinkingMessage.innerHTML = '<div class="message bot thinking">Kipux está pensando...</div>';
+        chatBox.appendChild(thinkingMessage);
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        // --- 4. LLAMAR A LA IA (USANDO NUESTRA NUEVA FUNCIÓN) ---
+        const { data, sources } = await getAIResponse(conversations[currentChatId].messages, messageContent);
+        
+        thinkingMessage.remove(); // Quitamos el "pensando..."
+        
+        const assistantMessage = data.choices[0].message.content;
+
+        // --- 5. GUARDAR Y MOSTRAR RESPUESTA DE LA IA ---
+        await saveMessageToDB(currentChatId, "assistant", assistantMessage, data);
+        conversations[currentChatId].messages.push({
+          role: "assistant",
+          content: assistantMessage,
+          metadata: data // <--- ¡AQUÍ ESTÁ LA MAGIA! Guardamos también los metadatos.
+      });
+        
+        // Si era un chat nuevo, actualizamos el título con la primera respuesta
+        if (conversations[currentChatId].messages.length === 2) { // User + Assistant = 2 mensajes
+            const newTitle = assistantMessage.substring(0, 40) + "...";
+            conversations[currentChatId].title = newTitle;
+            renderChatHistory();
+            await fetch(`/chat/conversation/${currentChatId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title: newTitle }),
+            });
+        }
+        
+        // Volvemos a mostrar la conversación para que incluya la respuesta del asistente Y LAS FUENTES
+        // ¡Necesitamos modificar `displayConversation` o `addMessageToUI` para que maneje las fuentes!
+        displayConversation(currentChatId);
+        // Por ahora, para evitar romper, vamos a añadir el mensaje de nuevo con las fuentes
+        // Idealmente, esto se refactoriza en addMessageToUI
+        const lastMessageWrapper = chatBox.lastElementChild;
+        if (sources.length > 0) {
+            const messageContentDiv = lastMessageWrapper.querySelector('.message-content');
+            if (messageContentDiv) {
+                const sourcesContainer = document.createElement('div');
+                sourcesContainer.className = 'message-sources';
+                let sourcesHTML = '<h6><i class="bi bi-search"></i> Fuentes de búsqueda:</h6><ul>';
+                sources.forEach(source => {
+                    sourcesHTML += `<li><a href="${source.url}" target="_blank" rel="noopener noreferrer" title="${source.url}">${source.title}</a></li>`;
+                });
+                sourcesHTML += '</ul>';
+                sourcesContainer.innerHTML = sourcesHTML;
+                messageContentDiv.appendChild(sourcesContainer);
+            }
+        }
+        
+    } catch (error) {
+        console.error("Error al enviar mensaje:", error);
+        // Asegurarse de que el mensaje "pensando" se elimine en caso de error
+        const thinkingElement = chatBox.querySelector('.thinking');
+        if (thinkingElement) {
+            thinkingElement.parentElement.parentElement.remove();
+        }
+    }
+};
 
   const fetchAndDisplayUserCredits = async () => {
       // 1. Verificaciones iniciales para asegurar que tenemos todo lo necesario
