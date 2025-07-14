@@ -118,17 +118,9 @@
                                 <button class="btn" type="button" id="upload-btn" title="Subir archivo">
                                     <i class="bi bi-plus-lg"></i>
                                 </button>
-                                
-                    
-                                
-                                <!-- BOTÓN "BUSCAR" MOVIDO AQUÍ -->
-                                <button type="button" id="search-toggle-btn" class="btn btn-mode ms-2">
-                                    <i class="bi bi-globe"></i> Buscar
-                                </button>
 
                                 <!-- Un espaciador para empujar el botón de enviar a la derecha -->
                                 <div class="flex-grow-1"></div>
-
                                 <button class="btn" type="submit" id="send-btn" title="Enviar mensaje">
                                     <i class="bi bi-arrow-up-circle-fill"></i>
                                 </button>
@@ -148,6 +140,7 @@
   
     </main>
 </div>
+
 
 <!-- ================================== MODAL DE CONFIGURACIÓN AVANZADO ================================== -->
 <div class="modal fade" id="settingsModal" tabindex="-1">
@@ -206,8 +199,39 @@
     </div>
 </div>
 
-<!-- SCRIPTS -->
+<!-- ================================== PLANTILLAS DE MENSAJE (NUEVO) ================================== -->
+<template id="user-message-template">
+    <div class="message-wrapper user" data-index="">
+        <div class="message-header"><i class="bi bi-person"></i> User</div>
+        <div class="message-content">
+            <div class="message user"></div>
+        </div>
+        <!-- Los mensajes de usuario no suelen tener footer con stats/acciones en este diseño -->
+    </div>
+</template>
 
+<template id="bot-message-template">
+    <div class="message-wrapper assistant" data-index="">
+        <div class="message-header">
+            <i class="bi bi-robot"></i> Assistant <span class="model-name-tag"></span>
+        </div>
+        <div class="message-content">
+            <div class="message assistant"></div>
+        </div>
+        <div class="message-footer">
+            <div class="message-stats"></div>
+            <div class="message-actions">
+                <button class="action-btn" data-action="copy" title="Copiar"><i class="bi bi-clipboard"></i></button>
+                <button class="action-btn" data-action="speak" title="Leer en voz alta"><i class="bi bi-volume-up"></i></button>
+                <button class="action-btn show-json-btn" data-action="show-json-btn" title="Mostrar JSON"><i class="bi bi-code-slash"></i></button>
+            </div>
+        </div>
+        <div class="json-response-container" style="display: none;"></div>
+    </div>
+</template>
+<!-- ================================== FIN PLANTILLAS DE MENSAJE ================================== -->
+ 
+<!-- SCRIPTS -->
 <!-- Marked.js CDN (Para renderizado de Markdown) -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -228,9 +252,7 @@
     const serverData = {
         userSettings: {
             apiKey: "<%= user.apiKey || '' %>",
-            liteLLMUrl: "<%= user.liteLLMUrl || '' %>",
-            theme: "<%= user.theme || 'system' %>",
-            defaultModel: "<%= user.defaultModel || 'gpt-4o-mini' %>"
+            liteLLMUrl: "<%= user.liteLLMUrl || '' %>"
         }
     };
 </script>

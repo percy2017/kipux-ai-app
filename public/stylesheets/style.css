@@ -1,4 +1,6 @@
-/* --- 1. VARIABLES Y ESTILO GLOBAL --- */
+/* ================================================= */
+/* 1. VARIABLES Y ESTILO GLOBAL
+/* ================================================= */
 :root {
     --bg-main: #343541;
     --bg-sidebar: #202123;
@@ -17,11 +19,12 @@ body {
     font-family: 'Inter', sans-serif;
     background-color: var(--bg-main);
     color: var(--text-primary);
-    overflow: hidden;
-    /* Evita el scroll en el body */
+    overflow: hidden; /* Evita el scroll en el body */
 }
 
-/* --- 2. SIDEBAR --- */
+/* ================================================= */
+/* 2. SIDEBAR Y NAVEGACIÓN
+/* ================================================= */
 #sidebar {
     width: 260px;
     background-color: var(--bg-sidebar);
@@ -45,48 +48,39 @@ body {
 }
 
 #new-chat-btn {
-    color: var(--text-secondary); /* Color grisáceo por defecto, como el texto de "Conversaciones" */
-    font-size: 1.5rem; /* Ajusta el tamaño si lo ves muy pequeño o grande */
-    transition: color 0.2s ease-in-out; /* Animación suave del color */
+    color: var(--text-secondary);
+    font-size: 1.2rem; /* Mantengo tu tamaño actual */
+    transition: color 0.2s ease-in-out;
 }
 
 #new-chat-btn:hover {
-    color: var(--text-primary); /* Se pone más brillante (blanco) al pasar el cursor */
+    color: var(--text-primary);
 }
 
-/* ================================================= */
-/*          ESTILOS PARA HISTORIAL DE CHATS          */
-/* ================================================= */
-
-
-/* 1. Contenedor principal de cada elemento del historial */
+/* ESTILOS PARA HISTORIAL DE CHATS */
 #chat-history .nav-link {
     display: flex !important; /* Forzamos flexbox */
     justify-content: space-between;
     align-items: center;
     gap: 0.75rem;
     padding: 0.6rem 0.75rem;
-    width: 100%; /* Ocupar todo el ancho disponible */
+    width: 100%;
 }
 
-/* 2. Estilo para el SPAN que contiene el título del chat */
 #chat-history .nav-link .chat-title-text {
     flex-grow: 1;
-    color: white; 
+    color: white;
 }
 
-/* Solución al texto azul sobre fondo azul */
 #chat-history .nav-link.active {
-    background-color: var(--accent-active); /* Un color de fondo menos intenso */
-    color: var(--text-primary); /* Forzar el texto a ser blanco */
+    background-color: var(--accent-active);
+    color: var(--text-primary);
 }
 
 #chat-history .nav-link.active .chat-title-text {
-    color: var(--text-primary) !important; /* Forzar el texto a blanco cuando está activo */
+    color: var(--text-primary) !important;
 }
 
-
-/* 3. Estilo para el botón de eliminar */
 .delete-chat-btn {
     background: transparent !important;
     border: none !important;
@@ -101,19 +95,19 @@ body {
     transition: all 0.2s ease;
 }
 
-/* 4. Mostrar el botón al hacer hover */
 #chat-history .nav-link:hover .delete-chat-btn {
     opacity: 1;
     visibility: visible;
     transform: scale(1);
 }
 
-/* 5. Estilo del botón al hacer hover sobre él */
 .delete-chat-btn:hover {
     color: #ef4444;
 }
 
-/* --- 3. MAIN CONTENT & HEADER --- */
+/* ================================================= */
+/* 3. MAIN CONTENT & HEADER
+/* ================================================= */
 #main-content {
     display: flex;
     flex-direction: column;
@@ -177,7 +171,9 @@ body {
     line-height: 1.2;
 }
 
-/* --- 4. CHAT AREA Y LAYOUT PRINCIPAL --- */
+/* ================================================= */
+/* 4. CHAT AREA Y LAYOUT PRINCIPAL
+/* ================================================= */
 #chat-area {
     display: flex;
     flex-direction: column;
@@ -202,7 +198,9 @@ body {
     margin-right: auto;
 }
 
-/* --- 5. MENSAJES --- */
+/* ================================================= */
+/* 5. MENSAJES DEL CHAT
+/* ================================================= */
 .message-wrapper {
     max-width: 80%;
     margin-bottom: 10px;
@@ -220,7 +218,7 @@ body {
     border-color: var(--bg-user-message);
 }
 
-.message-wrapper.bot {
+.message-wrapper.assistant { /* <-- CORRECCIÓN: De .bot a .assistant */
     align-self: flex-start;
 }
 
@@ -284,7 +282,9 @@ body {
     margin-right: 4px;
 }
 
-/* --- 6. BARRA DE ACCIONES DEL BOT --- */
+/* ================================================= */
+/* 6. BARRA DE ACCIONES DE MENSAJE (FOOTER)
+/* ================================================= */
 .message-actions {
     display: flex;
     gap: 0.75rem;
@@ -309,11 +309,16 @@ body {
     color: var(--text-primary);
 }
 
+/* ================================================= */
+/* 7. CONTENEDORES DE RESPUESTA JSON
+/* ================================================= */
+/* El contenedor principal ya está dentro de .message-wrapper */
 .json-response-container {
     margin-top: 10px;
     width: 100%;
 }
 
+/* El .code-block dentro de json-response-container ya tiene estilos base */
 .json-response-container .code-block {
     background-color: #282c34;
     border: 1px solid var(--border-color);
@@ -321,6 +326,7 @@ body {
     overflow: hidden;
 }
 
+/* La cabecera dentro de json-response-container también ya tiene estilos base */
 .json-response-container .code-header {
     background-color: #21252b;
     padding: 0.5rem 1rem;
@@ -343,44 +349,41 @@ body {
     font-size: 0.9em;
 }
 
-/* --- 7. INPUT FORM AVANZADO  --- */
+
+/* ================================================= */
+/* 8. INPUT FORM AVANZADO
+/* ================================================= */
 #chat-form .input-group {
     background-color: var(--bg-input);
     border: 1px solid var(--border-color);
     border-radius: 1.25rem;
     padding: 0.75rem 1.25rem;
-    /* Usamos flexbox, con alineación al final para los botones */
     display: flex;
-    /* align-items: flex-end; */
     gap: 0.75rem;
 }
 
-#user-input {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    color: var(--text-primary) !important;
+/* <-- CORRECCIÓN: Mayor especificidad para eliminar !important */
+#chat-form .input-group #user-input {
+    background: transparent; /* QUITADO !important */
+    border: none;            /* QUITADO !important */
+    box-shadow: none;        /* QUITADO !important */
+    color: var(--text-primary); /* QUITADO !important */
     resize: none;
     line-height: 1.6;
     max-height: 250px;
     overflow-y: auto;
     padding: 0;
-    /* Hacemos que el textarea ocupe el espacio sobrante */
     flex-grow: 1;
 }
 
 #user-input:focus {
-    /* Esto elimina el borde o 'resplandor' que aparece al hacer clic */
     outline: none;
 }
 
-/* El contenedor del botón "Buscar" se posiciona de forma absoluta sobre el textarea */
 #mode-buttons-container {
     position: absolute;
     top: 1.5rem;
-    /* Ajustado al padding del contenedor padre */
     left: 4.5rem;
-    /* Ajustado para que no choque con el botón '+' */
     z-index: 5;
 }
 
@@ -409,10 +412,8 @@ body {
 #chat-form .btn {
     color: var(--text-secondary);
     font-size: 1.5rem;
-    /* Quitamos el margen inferior, la alineación flex se encarga */
     margin-bottom: 0;
     flex-shrink: 0;
-    /* Evita que los botones se encojan */
 }
 
 #chat-form .btn:hover {
@@ -434,7 +435,21 @@ body {
     width: 250px;
 }
 
-/* --- 8. RESALTADO DE SINTAXIS (HIGHLIGHT.JS) --- */
+/* ================================================= */
+/* 9. ESTADO DE CARGA DEL FORMULARIO
+/* ================================================= */
+#chat-form.is-loading #user-input,
+#chat-form.is-loading #send-btn,
+#chat-form.is-loading #upload-btn {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none; /* Evita clics */
+}
+
+/* ================================================= */
+/* 10. RESALTADO DE SINTAXIS (HIGHLIGHT.JS) Y CÓDIGO GENERAL
+/* ================================================= */
+/* ESTO SE APLICA A TODOS LOS BLOQUES DE CÓDIGO CREADOS POR JS (incluido el JSON) */
 .code-block {
     background-color: #282c34;
     border: 1px solid var(--border-color);
@@ -443,6 +458,7 @@ body {
     overflow: hidden;
 }
 
+/* Cabecera para todos los bloques de código */
 .code-header {
     display: flex;
     justify-content: space-between;
@@ -453,11 +469,27 @@ body {
     color: var(--text-secondary);
 }
 
-.code-header .copy-code-btn {
-    background: none;
-    border: none;
-    color: var(--text-secondary);
+/* NUEVO: Contenedor para los botones dentro de la cabecera del código */
+.code-header .code-actions {
+    display: flex;
+    gap: 0.5rem; /* Espacio entre los botones */
+}
+
+/* Estilos para los botones de copiar y descargar en la cabecera del código */
+.code-header .action-btn {
+    font-size: 1rem; /* Tamaño del icono */
+    padding: 0.25rem 0.5rem; /* Un poco de padding para hacerlos más clickables */
+    border-radius: 4px;
+    transition: background-color 0.2s, color 0.2s;
+    color: var(--text-secondary); /* Color por defecto de los iconos */
+    background: none; /* Asegura que no tenga fondo */
+    border: none;     /* Asegura que no tenga borde */
     cursor: pointer;
+}
+
+.code-header .action-btn:hover {
+    color: var(--text-primary); /* Icono más brillante al pasar el ratón */
+    background-color: var(--bg-message-hover); /* Fondo sutil al pasar el ratón */
 }
 
 .code-block pre {
@@ -472,7 +504,9 @@ body {
     font-size: 0.9em;
 }
 
-/* --- 9. MODAL DE CONFIGURACIÓN --- */
+/* ================================================= */
+/* 11. MODAL DE CONFIGURACIÓN
+/* ================================================= */
 #settingsModal .modal-content {
     background-color: var(--bg-sidebar);
     border: 1px solid var(--border-color);
@@ -504,18 +538,15 @@ body {
     color: white;
 }
 
-/* --- 10. UTILIDADES --- */
+/* ================================================= */
+/* 12. UTILIDADES Y LAYOUT DINÁMICO
+/* ================================================= */
 .thinking {
     color: #aaa;
     font-style: italic;
 }
 
-/* =================================================================== */
-/* --- 11. LAYOUT DINÁMICO: VISTA INICIAL vs. VISTA DE CHAT --- */
-/* =================================================================== */
-
-/* --- ESTADO INICIAL (SIN la clase .chat-started) --- */
-
+/* ESTADO INICIAL (SIN la clase .chat-started) */
 #chat-area {
     justify-content: center;
 }
@@ -530,22 +561,19 @@ body {
 }
 
 #chat-form-wrapper {
-    width: 100%;             /* Ocupa el 100% del espacio disponible */
-    max-width: 840px;        /* Pero nunca será más ancho de 840px (ajusta este valor a tu gusto) */
-    margin-left: auto;       /* Centra el contenedor horizontalmente */
-    margin-right: auto;      /* Centra el contenedor horizontalmente */
-    padding: 0 1rem 1rem 1rem; /* Añade un poco de espacio inferior y a los lados */
-    flex-shrink: 0;          /* Evita que el contenedor se encoja en el layout flex */
+    width: 100%;
+    max-width: 840px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 1rem 1rem 1rem;
+    flex-shrink: 0;
 }
 
-/* El formulario dentro del wrapper ya no necesita márgenes extra */
 #chat-form {
     width: 100%;
 }
 
-
-/* --- ESTADO DE CHAT ACTIVO (CON la clase .chat-started) --- */
-
+/* ESTADO DE CHAT ACTIVO (CON la clase .chat-started) */
 #chat-area.chat-started {
     justify-content: flex-start;
 }
@@ -563,28 +591,141 @@ body {
 }
 
 /* ================================================= */
-/*          ESTILOS PARA MEJORAR EL TOOLTIP          */
+/* 13. ESTILOS PARA MARKDOWN (TABLAS y Listas)
 /* ================================================= */
 
-.tooltip-inner {
-    /* 1. La línea más importante: respeta los saltos de línea (\n) del JS */
-    white-space: pre-line;
+/* Estilos para las tablas generadas por Marked.js */
+.message-content table {
+    width: 100%;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    border-collapse: collapse;
+    color: var(--text-primary);
+    background-color: var(--bg-input);
+}
 
-    /* 2. Alinear el texto a la izquierda para que se vea como una lista ordenada */
+.message-content th,
+.message-content td {
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
     text-align: left;
+}
 
-    /* 3. Darle un ancho mínimo para que el contenido no se comprima tanto */
-    min-width: 280px; /* <-- Puedes ajustar este valor si lo necesitas */
-    
-    /* 4. (Opcional) Un poco más de padding para que respire mejor */
+.message-content th {
+    background-color: var(--bg-sidebar);
+    font-weight: 600;
+}
+
+.message-content tr:nth-of-type(even) {
+    background-color: rgba(0, 0, 0, 0.1); /* Filas alternas con un color sutil */
+}
+
+/* Estilos para las listas ordenadas y no ordenadas */
+.message-content ul,
+.message-content ol {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    padding-left: 2rem; /* Sangría para las viñetas/números */
+}
+
+.message-content li {
+    margin-bottom: 0.25rem; /* Pequeño espacio entre elementos de lista */
+}
+
+/* Estilos para citas en bloque */
+.message-content blockquote {
+    border-left: 4px solid var(--accent-blue);
+    padding-left: 1rem;
+    margin: 1rem 0;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* ================================================= */
+/* 14. ESTILOS PARA MEJORAR EL TOOLTIP
+/* ================================================= */
+.tooltip-inner {
+    white-space: pre-line; /* Respeta los saltos de línea (\n) del JS */
+    text-align: left;
+    min-width: 280px;
     padding: 0.8rem;
 }
 
-.message-sources {
-    margin-top: 15px;
-    padding: 10px;
-    background-color: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+/* =================================================================== */
+/* 15. RESPONSIVE DESIGN (PARA PANTALLAS PEQUEÑAS)
+/* =================================================================== */
+@media (max-width: 768px) {
+
+    /* Ocultar la sidebar por defecto y hacerla flotante */
+    #sidebar {
+        position: fixed;
+        left: -260px;
+        top: 0;
+        height: 100%;
+        z-index: 1100;
+        transition: left 0.3s ease-in-out;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.5); /* Sombra para que se vea que "flota" */
+    }
+
+    #sidebar.visible { /* Nueva clase que JavaScript añadirá para mostrar la sidebar */
+        left: 0;
+    }
+
+    /* El botón de toggle de la sidebar ahora debe estar siempre visible en móvil */
+    #sidebar-toggle {
+        display: block;
+    }
+    
+    /* Ajustar el padding y ancho de los mensajes y el formulario para pantallas pequeñas */
+    #chat-form-wrapper {
+        padding: 0.5rem;
+        max-width: 100%;
+    }
+    
+    #chat-box {
+        padding: 0.5rem;
+    }
+
+    .message-wrapper {
+        max-width: 95%;
+        padding: 8px;
+    }
+
+    .message-header {
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+    }
+
+    .message-content {
+        padding-left: 20px;
+    }
+
+    .message-footer {
+        flex-direction: column; /* Apila stats y acciones si hay poco espacio */
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding-left: 20px;
+        font-size: 0.85rem;
+    }
+
+    /* Ocultar algunas estadísticas en móvil para no saturar la vista */
+    .message-stats span:not(:first-child) { /* Oculta todo menos el tiempo */
+        display: none;
+    }
+    .message-stats {
+         flex-direction: column;
+         align-items: flex-start;
+         gap: 0.2rem;
+    }
+    .message-actions {
+         margin-top: 0.5rem;
+    }
+
+    /* Ajustes para el modal de modelos en móvil */
+    .model-popover-panel {
+        width: 95%;
+        left: 2.5%;
+        right: 2.5%;
+        transform: translateX(0);
+    }
 }
-/* ... y el resto del CSS que te di en respuestas anteriores ... */
