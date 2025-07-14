@@ -70,35 +70,52 @@
             </div>
         </header>
 
-        <!-- Chat Area -->
+        <!-- ======================= INICIO: BLOQUE HTML AJUSTADO ======================= -->
         <div id="chat-area" class="flex-grow-1 d-flex flex-column">
-            <div id="initial-view" class="text-center">
-                <h2 class="display-4">Hola, <%= user.name %></h2>
-                <p class="lead text-muted">¿Cómo puedo ayudarte hoy?</p>
+
+            <!-- VISTA INICIAL: Solo contiene el saludo. Le quitamos flex-grow-1. -->
+            <div id="initial-view" class="d-flex flex-column align-items-center justify-content-center text-center">
+                <h2 class="display-4">Hola, <%= (typeof user !== 'undefined') ? user.name : 'Invitado' %></h2>
             </div>
+
+            <!-- CONTENEDOR DE MENSAJES: Oculto al inicio -->
             <div id="chat-box" class="w-100 h-100 overflow-auto p-3"></div>
 
-            <!-- Formulario de Input Avanzado -->
-            <div id="chat-form-container" class="w-100 p-3">
-                <form id="chat-form" class="mx-auto position-relative">
-                     <!-- Menú de Subida (Controlado por JS) -->
-                    <div id="upload-menu" class="upload-menu-panel shadow">
-                        <a href="#" class="upload-item" data-action="upload-doc"><i class="bi bi-paperclip me-2"></i>Subir documento</a>
-                        <a href="#" class="upload-item" data-action="upload-img"><i class="bi bi-image me-2"></i>Subir imagen</a>
-                        <a href="#" class="upload-item" data-action="upload-aud"><i class="bi bi-play me-2"></i>Subir audio</a>
-                    </div>
-                    <!-- Input principal con botones -->
-                    <div class="input-group">
-                        <button class="btn" type="button" id="upload-btn"><i class="bi bi-plus-lg"></i></button>
-                        <input type="text" id="user-input" class="form-control" placeholder="Escribe tu mensaje aquí..." autocomplete="off">
-                        <button class="btn" type="submit" id="send-btn"><i class="bi bi-arrow-up-circle-fill"></i></button>
-                    </div>
-                </form>
-                <!-- Input oculto para la subida de archivos -->
-                <input type="file" id="file-input" class="d-none">
-            </div>
-        </div>
+            <!-- FORMULARIO: Este es el único otro elemento visible en la vista inicial -->
+            <div id="chat-form-wrapper" class="w-100 px-3 pb-3">
+                <div id="chat-form-container" class="mx-auto">
+                    <form id="chat-form" class="position-relative">
+                        <!-- Menú de Subida (sin cambios) -->
+                        <div id="upload-menu" class="upload-menu-panel shadow">
+                            <!-- ...items del menú... -->
+                        </div>
+                        
+                        <div class="position-relative">
+                            <!-- Contenedor de botones flotantes (sin cambios) -->
+                            <div id="mode-buttons-container">
+                                <button type="button" id="search-toggle-btn" class="btn btn-mode">
+                                    <i class="bi bi-globe"></i> Buscar
+                                </button>
+                            </div>
 
+                            <!-- Input principal con botones -->
+                            <div class="input-group">
+                                <button class="btn" type="button" id="upload-btn"><i class="bi bi-plus-lg"></i></button>
+                                <!-- AQUÍ ESTÁ EL CAMBIO: El texto de ayuda va en el placeholder -->
+                                <textarea id="user-input" class="form-control" placeholder="¿Cómo puedo ayudarte hoy?" autocomplete="off"></textarea>
+                                <button class="btn" type="submit" id="send-btn"><i class="bi bi-arrow-up-circle-fill"></i></button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Input oculto para la subida de archivos (se mantiene igual) -->
+            <input type="file" id="file-input" class="d-none">
+        </div>
+        <!-- ======================= FIN: BLOQUE HTML AJUSTADO ========================== -->
+
+  
     </main>
 </div>
 

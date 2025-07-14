@@ -26,6 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const uploadBtn = document.getElementById("upload-btn");
   const uploadMenu = document.getElementById("upload-menu");
   const fileInput = document.getElementById("file-input");
+const searchToggleButton = document.getElementById("search-toggle-btn");
 
   // --- Selector de Modelos
   const modelSelectorBtn = document.getElementById("model-selector-btn");
@@ -573,6 +574,17 @@ document.addEventListener("DOMContentLoaded", () => {
       e.preventDefault();
       handleFormSubmit();
     });
+
+    if (searchToggleButton) { // Buena práctica: verificar que el elemento existe
+      searchToggleButton.addEventListener('click', function() {
+          // Alterna la clase 'active' para cambiar el estilo CSS
+          this.classList.toggle('active');
+
+          // Opcional: Mostrar en consola si el modo está activo
+          const isActive = this.classList.contains('active');
+          console.log('Modo de búsqueda web:', isActive ? 'ACTIVADO' : 'DESACTIVADO');
+      });
+    }
 
     chatHistory.addEventListener("click", async (e) => {
       const link = e.target.closest("a");
