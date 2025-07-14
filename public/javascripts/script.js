@@ -37,9 +37,10 @@ const searchToggleButton = document.getElementById("search-toggle-btn");
   const saveSettingsBtn = document.getElementById("save-settings-btn");
   const apiKeyInput = document.getElementById("apiKey");
   const liteLLMUrlInput = document.getElementById("liteLLMUrl");
-  const themeSelector = document.getElementById("theme-selector");
-  const notificationsSwitch = document.getElementById("notifications-switch");
   const defaultModelSelect = document.getElementById("default-model-select");
+
+  const creditsCounter = document.getElementById("credits-counter");
+  const creditsDisplay = document.getElementById("credits-display"); // El div contenedor del contador
 
   // --- Estado Global
   let conversations = {};
@@ -47,18 +48,26 @@ const searchToggleButton = document.getElementById("search-toggle-btn");
   let availableModels = [];
   let appSettings = {};
   let thinkingAbortController = null;
+  let bootstrapTooltip = null;
 
   // =================================================================================
   //  2. FUNCIONES DE INICIALIZACIÓN Y CONFIGURACIÓN
   // =================================================================================
 
   const initialize = async () => {
-    loadSettings();
-    await loadConversations(); 
-    renderChatHistory();
-    fetchAndRenderModels();
-    setupEventListeners();
-    // chatArea.classList.remove("chat-started");
+    loadSettings()
+    setupEventListeners()
+    if (creditsDisplay) {
+        bootstrapTooltip = new bootstrap.Tooltip(creditsDisplay);
+    }
+    await Promise.all([
+        loadConversations(),
+        fetchAndRenderModels(),
+        fetchAndDisplayUserCredits()
+    ]);
+    
+    renderChatHistory()
+    
   };
 
   const loadSettings = () => {
@@ -234,29 +243,46 @@ const searchToggleButton = document.getElementById("search-toggle-btn");
   // =================================================================================
   //  4. MANIPULACIÓN DE LA UI (INCLUYE BARRA DE ACCIONES Y HIGHLIGHT.JS)
   // =================================================================================
-
   const renderChatHistory = () => {
-    chatHistory.innerHTML = "";
-    // Ordenar por ID de conversación (que es un timestamp) para mostrar los más recientes primero
-    Object.values(conversations)
-      .sort((a, b) => b.id - a.id)
-      .forEach((chat) => {
-        const li = document.createElement("li");
-        li.classList.add("nav-item", "mb-1");
-        li.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center">
-                    <a href="#" class="nav-link flex-grow-1" data-chat-id="${chat.id}">${chat.title}</a>
-                    <button class="btn btn-sm btn-outline-danger delete-chat-btn" data-chat-id="${chat.id}" title="Eliminar chat">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </div>
-            `;
-        chatHistory.appendChild(li);
-      });
-    const activeLink = chatHistory.querySelector(
-      `.nav-link[data-chat-id="${currentChatId}"]`
-    );
-    if (activeLink) activeLink.classList.add("active");
+      chatHistory.innerHTML = "";
+      
+      // 1. Definimos la longitud máxima del título
+      const MAX_TITLE_LENGTH = 20; // <--- PUEDES AJUSTAR ESTE NÚMERO
+
+      Object.values(conversations)
+        .sort((a, b) => b.id - a.id)
+        .forEach((chat) => {
+          
+          // 2. Lógica para acortar el título
+          let displayTitle = chat.title;
+          if (displayTitle.length > MAX_TITLE_LENGTH) {
+              displayTitle = displayTitle.substring(0, MAX_TITLE_LENGTH) + "...";
+          }
+
+          const li = document.createElement("li");
+          li.classList.add("nav-item");
+
+          // 3. Usamos el título acortado (displayTitle) en el HTML
+          li.innerHTML = `
+              <a href="#" class="nav-link d-flex justify-content-between align-items-center" data-chat-id="${chat.id}">
+                  
+                  <!-- Ahora usamos la variable 'displayTitle' -->
+                  <span class="chat-title-text">${displayTitle}</span>
+
+                  <button class="btn delete-chat-btn" data-chat-id="${chat.id}" title="Eliminar chat">
+                      <i class="bi bi-trash3"></i>
+                  </button>
+
+              </a>
+          `;
+          chatHistory.appendChild(li);
+        });
+
+      // Esta parte se queda igual
+      const activeLink = chatHistory.querySelector(
+        `.nav-link[data-chat-id="${currentChatId}"]`
+      );
+      if (activeLink) activeLink.classList.add("active");
   };
 
   const addMessageToUI = (sender, text, messageIndex, rawData = null) => {
@@ -555,205 +581,310 @@ const searchToggleButton = document.getElementById("search-toggle-btn");
       });
       displayConversation(currentChatId)
     }
-  } catch (error) {
-    console.error("Error al enviar mensaje:", error);
-  }
-};
+    } catch (error) {
+      console.error("Error al enviar mensaje:", error);
+    }
+  };
 
+  const fetchAndDisplayUserCredits = async () => {
+      // 1. Verificaciones iniciales para asegurar que tenemos todo lo necesario
+      if (!creditsCounter || !appSettings.liteLLMUrl || !appSettings.apiKey) {
+        if (creditsCounter) creditsCounter.textContent = 'Configure URL/Key';
+        return;
+      }
 
-  // =================================================================================
-  //  6. EVENT LISTENERS
-  // =================================================================================
+      try {
+          // 2. Hacemos la llamada a la API que ya confirmamos que funciona (con GET)
+          const response = await fetch(`${appSettings.liteLLMUrl}/key/info`, {
+              headers: {
+                  'Authorization': `Bearer ${appSettings.apiKey}`,
+                  'Content-Type': 'application/json',
+              },
+          });
 
-  function setupEventListeners() {
-    sidebarToggle.addEventListener("click", () =>
-      sidebar.classList.toggle("hidden")
-    );
-    newChatBtn.addEventListener("click", startNewChat);
-    chatForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      handleFormSubmit();
+          // 3. Manejo de errores de conexión o autenticación
+          if (!response.ok) {
+              console.error("Error de API al obtener créditos:", response.status);
+              creditsCounter.textContent = 'Créditos no disponibles';
+              return;
+          }
+
+          // 4. Procesamos el JSON que nos devuelve la API
+          const keyInfo = await response.json();
+          console.log(appSettings.apiKey)
+          console.log(keyInfo)
+          // 5. Verificamos que la respuesta tenga la estructura esperada
+          if (!keyInfo || !keyInfo.info) {
+              creditsCounter.textContent = 'Respuesta de API inválida';
+              return;
+          }
+
+          // --- EXTRACCIÓN DE DATOS DEL JSON (A MEDIDA PARA TI) ---
+          const info = keyInfo.info;
+          const spend = info.spend || 0;
+          const maxBudget = info.max_budget; // Puede ser null
+          const createdAtISO = info.created_at;
+          const updatedAtISO = info.updated_at;
+
+          // --- LÓGICA DE VISUALIZACIÓN ---
+
+          // CASO 1: No hay un presupuesto máximo definido (max_budget es null)
+          if (maxBudget === null) {
+              const spendFormatted = spend.toLocaleString('es-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 4 });
+              creditsCounter.textContent = `Gasto: ${spendFormatted}`;
+              
+              const tooltipText = `Gasto Total: ${spendFormatted}\n(Sin presupuesto máximo definido)`;
+              if (bootstrapTooltip) {
+                  bootstrapTooltip.setContent({ '.tooltip-inner': tooltipText });
+              } else {
+                  creditsDisplay.setAttribute('title', tooltipText);
+              }
+              return; // Salimos de la función aquí
+          }
+
+          // CASO 2: Sí hay un presupuesto máximo definido
+          const remainingBudget = maxBudget - spend;
+          creditsCounter.textContent = `Disponible: ${remainingBudget.toLocaleString('es-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 4 })}`;
+          
+          // Función interna para formatear fechas
+          const formatToFriendlyDate = (isoString) => {
+              if (!isoString) return "No definida";
+              return new Date(isoString).toLocaleString('es-ES', {
+                  day: 'numeric', month: 'long', year: 'numeric',
+                  hour: '2-digit', minute: '2-digit'
+              });
+          };
+
+          // Construcción del tooltip detallado
+          const tooltipDetails = [
+              `Presupuesto Máximo: ${maxBudget.toLocaleString('es-US', { style: 'currency', currency: 'USD' })}`,
+              `Gasto Actual: ${spend.toLocaleString('es-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 4 })}`,
+              '---',
+              `Clave Creada: ${formatToFriendlyDate(createdAtISO)}`,
+              `Última Actualización: ${formatToFriendlyDate(updatedAtISO)}`
+          ];
+
+          const finalTooltipText = tooltipDetails.join('\n');
+
+          // Actualización del tooltip
+          if (bootstrapTooltip) {
+              bootstrapTooltip.setContent({ '.tooltip-inner': finalTooltipText });
+          } else {
+              creditsDisplay.setAttribute('title', finalTooltipText);
+          }
+
+      } catch (error) {
+          console.error("Error de red al obtener créditos:", error);
+          creditsCounter.textContent = 'Error al cargar';
+          const errorText = 'No se pudo conectar para obtener los créditos.';
+          if (bootstrapTooltip) bootstrapTooltip.setContent({ '.tooltip-inner': errorText });
+          else creditsDisplay.setAttribute('title', errorText);
+      }
+  };
+
+// =================================================================================
+//  6. EVENT LISTENERS (FUNCIÓN COMPLETA Y CORREGIDA)
+// =================================================================================
+
+function setupEventListeners() {
+  sidebarToggle.addEventListener("click", () =>
+    sidebar.classList.toggle("hidden")
+  );
+  newChatBtn.addEventListener("click", startNewChat);
+  chatForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    handleFormSubmit();
+  });
+
+  if (searchToggleButton) { // Buena práctica: verificar que el elemento existe
+    searchToggleButton.addEventListener('click', function() {
+        // Alterna la clase 'active' para cambiar el estilo CSS
+        this.classList.toggle('active');
+
+        // Opcional: Mostrar en consola si el modo está activo
+        const isActive = this.classList.contains('active');
+        console.log('Modo de búsqueda web:', isActive ? 'ACTIVADO' : 'DESACTIVADO');
     });
+  }
 
-    if (searchToggleButton) { // Buena práctica: verificar que el elemento existe
-      searchToggleButton.addEventListener('click', function() {
-          // Alterna la clase 'active' para cambiar el estilo CSS
-          this.classList.toggle('active');
+  // Listener ÚNICO para el historial de chats
+  chatHistory.addEventListener("click", async (e) => {
+      // Primero, revisamos si el clic fue en el botón de eliminar
+      const deleteBtn = e.target.closest(".delete-chat-btn");
 
-          // Opcional: Mostrar en consola si el modo está activo
-          const isActive = this.classList.contains('active');
-          console.log('Modo de búsqueda web:', isActive ? 'ACTIVADO' : 'DESACTIVADO');
+      if (deleteBtn) {
+          e.preventDefault(); // Previene la navegación del enlace padre <a>
+          e.stopPropagation(); // Detiene la propagación del evento para que no active el clic del enlace
+
+          const chatIdToDelete = parseInt(deleteBtn.dataset.chatId);
+          Swal.fire({
+              title: "¿Estás seguro?",
+              text: "¡No podrás revertir esto!",
+              icon: "warning",
+              theme: "dark",
+              showCancelButton: true,
+              confirmButtonColor: "#d33",
+              cancelButtonColor: "#3085d6",
+              confirmButtonText: "Sí, eliminarlo!",
+              cancelButtonText: "Cancelar",
+          }).then(async (result) => {
+              if (result.isConfirmed) {
+                  try {
+                      const response = await fetch(`/chat/conversation/${chatIdToDelete}`, {
+                          method: "DELETE",
+                      });
+                      if (!response.ok) throw new Error("Error al eliminar la conversación.");
+
+                      delete conversations[chatIdToDelete];
+                      renderChatHistory(); // Vuelve a dibujar la lista sin el chat eliminado
+
+                      if (currentChatId === chatIdToDelete) {
+                          startNewChat(); // Si se eliminó el chat actual, limpia la pantalla
+                      }
+
+                      Swal.fire({
+                          toast: true,
+                          position: 'top-end',
+                          icon: 'success',
+                          title: 'Chat eliminado',
+                          showConfirmButton: false,
+                          timer: 2000,
+                          theme: 'dark'
+                      });
+                  } catch (error) {
+                      console.error("Error al eliminar chat:", error);
+                      Swal.fire("Error!", "No se pudo eliminar el chat.", "error");
+                  }
+              }
+          });
+          
+      } else {
+          // Si no fue en el botón de eliminar, revisamos si fue en el enlace principal
+          const link = e.target.closest(".nav-link");
+          if (link) {
+              e.preventDefault();
+              if (thinkingAbortController) thinkingAbortController.abort();
+              const chatIdToDisplay = parseInt(link.dataset.chatId);
+              displayConversation(chatIdToDisplay);
+          }
+      }
+  });
+
+  // --- Input Avanzado Listeners
+  uploadBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    uploadMenu.style.display =
+      uploadMenu.style.display === "block" ? "none" : "block";
+  });
+  document.addEventListener("click", () => {
+    uploadMenu.style.display = "none";
+    modelPopover.style.display = "none";
+  });
+  uploadMenu.addEventListener("click", (e) => {
+    e.preventDefault();
+    const action = e.target.closest(".upload-item")?.dataset.action;
+    if (action) fileInput.click();
+    uploadMenu.style.display = "none";
+  });
+
+  // --- Barra de Acciones Listener
+  chatBox.addEventListener("click", (e) => {
+    const actionBtn = e.target.closest(".action-btn");
+    const codeCopyBtn = e.target.closest(".copy-code-btn-inner");
+    const showJsonBtn = e.target.closest(".show-json-btn");
+
+    if (actionBtn) {
+      const wrapper = e.target.closest(".message-wrapper");
+      const messageDiv = wrapper.querySelector(".message");
+      const messageIndex = parseInt(wrapper.dataset.index, 10);
+      const action = actionBtn.dataset.action;
+
+      if (action === "copy")
+        navigator.clipboard.writeText(messageDiv.innerText);
+      if (action === "speak") {
+        const utterance = new SpeechSynthesisUtterance(messageDiv.innerText);
+        speechSynthesis.speak(utterance);
+      }
+      if (action === "regenerate") regenerateLastResponse(messageIndex);
+    }
+    if (codeCopyBtn) {
+      navigator.clipboard.writeText(
+        e.target.closest(".code-block").querySelector("code").innerText
+      );
+    }
+    if (showJsonBtn) {
+      const wrapper = e.target.closest(".message-wrapper");
+      const jsonContainer = wrapper.querySelector(".json-response-container");
+      if (jsonContainer) {
+        jsonContainer.style.display =
+          jsonContainer.style.display === "block" ? "none" : "block";
+      }
+    }
+  });
+
+  // --- Otros Listeners
+  modelSelectorBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    modelPopover.style.display =
+      modelPopover.style.display === "block" ? "none" : "block";
+    const modelSearchInput = document.getElementById("model-search-input");
+    if (modelSearchInput) {
+      modelSearchInput.focus();
+    }
+  });
+  modelPopover.addEventListener("click", (e) => {
+    const target = e.target.closest(".model-item");
+    if (target) {
+      e.preventDefault();
+      const selectedModelId = target.dataset.modelId;
+      modelSelectorBtn.textContent = selectedModelId;
+      appSettings.defaultModel = selectedModelId;
+      modelPopover.style.display = "none";
+      if (defaultModelSelect) {
+        defaultModelSelect.value = selectedModelId;
+      }
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        icon: "success",
+        theme: "dark",
+        title: `Modelo seleccionado: ${selectedModelId}`,
       });
     }
+  });
 
-    chatHistory.addEventListener("click", async (e) => {
-      const link = e.target.closest("a");
-      if (link) {
-        e.preventDefault();
-        if (thinkingAbortController) thinkingAbortController.abort();
-        await displayConversation(parseInt(link.dataset.chatId)); // Asegurarse de que sea un número
-      }
-    });
+  saveSettingsBtn.addEventListener("click", saveSettings);
 
-    chatHistory.addEventListener("click", async (e) => {
-      const deleteBtn = e.target.closest(".delete-chat-btn");
-      if (deleteBtn) {
-        e.preventDefault();
-        e.stopPropagation(); // Evitar que el clic se propague al enlace del chat
-        const chatIdToDelete = parseInt(deleteBtn.dataset.chatId);
+  // --- LÓGICA PARA EL TEXTAREA (userInput) ---
+  if (userInput) {
+      // 1. Lógica para ajustar la altura automáticamente (ya la tenías)
+      const adjustTextareaHeight = () => {
+          userInput.style.height = 'auto'; // Resetea la altura
+          userInput.style.height = (userInput.scrollHeight) + 'px'; // Ajusta la altura al contenido
+      };
+      userInput.addEventListener('input', adjustTextareaHeight);
+      adjustTextareaHeight();
 
-        Swal.fire({
-          title: "¿Estás seguro?",
-          text: "¡No podrás revertir esto!",
-          icon: "warning",
-          theme: "dark",
-          showCancelButton: true,
-          confirmButtonColor: "#d33",
-          cancelButtonColor: "#3085d6",
-          confirmButtonText: "Sí, eliminarlo!",
-          cancelButtonText: "Cancelar",
-        }).then(async (result) => {
-          if (result.isConfirmed) {
-            try {
-              const response = await fetch(
-                `/chat/conversation/${chatIdToDelete}`,
-                {
-                  method: "DELETE",
-                  headers: { "Content-Type": "application/json" },
-                }
-              );
-              if (!response.ok)
-                throw new Error("Error al eliminar la conversación.");
+      // ▼▼▼ ESTE ES EL NUEVO CÓDIGO AÑADIDO ▼▼▼
+      // 2. Lógica para enviar el mensaje al presionar Ctrl + Enter
+      userInput.addEventListener("keydown", (event) => {
+          // Comprueba si la tecla es 'Enter' Y si 'Ctrl' (o 'Cmd' en Mac) está presionada
+          if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+              
+              event.preventDefault(); // Evita que se añada una nueva línea
 
-              delete conversations[chatIdToDelete];
-              renderChatHistory();
-              Swal.fire("Eliminado!", "El chat ha sido eliminado.", "success");
-
-              // Si el chat eliminado era el actual, iniciar uno nuevo
-              if (currentChatId === chatIdToDelete) {
-                currentChatId = null; // Resetear currentChatId
-                startNewChat();
+              // Si hay texto, llama a la función para enviar
+              if (userInput.value.trim() !== "") {
+                  handleFormSubmit();
               }
-            } catch (error) {
-              console.error("Error al eliminar chat:", error);
-              Swal.fire("Error!", "No se pudo eliminar el chat.", "error");
-            }
           }
-        });
-      } else {
-        const link = e.target.closest("a");
-        if (link) {
-          e.preventDefault();
-          if (thinkingAbortController) thinkingAbortController.abort();
-          await displayConversation(parseInt(link.dataset.chatId));
-        }
-      }
-    });
-
-    // --- Input Avanzado Listeners
-    uploadBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      uploadMenu.style.display =
-        uploadMenu.style.display === "block" ? "none" : "block";
-    });
-    document.addEventListener("click", () => {
-      uploadMenu.style.display = "none";
-      modelPopover.style.display = "none";
-    });
-    uploadMenu.addEventListener("click", (e) => {
-      e.preventDefault();
-      const action = e.target.closest(".upload-item")?.dataset.action;
-      if (action) fileInput.click();
-      uploadMenu.style.display = "none";
-    });
-
-    // --- Barra de Acciones Listener
-    chatBox.addEventListener("click", (e) => {
-      const actionBtn = e.target.closest(".action-btn");
-      const codeCopyBtn = e.target.closest(".copy-code-btn-inner");
-      const showJsonBtn = e.target.closest(".show-json-btn"); // Nuevo botón
-
-      if (actionBtn) {
-        const wrapper = e.target.closest(".message-wrapper");
-        const messageDiv = wrapper.querySelector(".message");
-        const messageIndex = parseInt(wrapper.dataset.index, 10);
-        const action = actionBtn.dataset.action;
-
-        if (action === "copy")
-          navigator.clipboard.writeText(messageDiv.innerText);
-        if (action === "speak") {
-          const utterance = new SpeechSynthesisUtterance(messageDiv.innerText);
-          speechSynthesis.speak(utterance);
-        }
-        if (action === "regenerate") regenerateLastResponse(messageIndex);
-      }
-      if (codeCopyBtn) {
-        navigator.clipboard.writeText(
-          e.target.closest(".code-block").querySelector("code").innerText
-        );
-      }
-      if (showJsonBtn) {
-        // Lógica para el nuevo botón
-        const wrapper = e.target.closest(".message-wrapper");
-        const jsonContainer = wrapper.querySelector(".json-response-container");
-        if (jsonContainer) {
-          jsonContainer.style.display =
-            jsonContainer.style.display === "block" ? "none" : "block";
-        }
-      }
-    });
-
-    // --- Otros Listeners
-    modelSelectorBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      modelPopover.style.display =
-        modelPopover.style.display === "block" ? "none" : "block";
-      // Enfocar el input de búsqueda al abrir el popover
-      const modelSearchInput = document.getElementById("model-search-input");
-      if (modelSearchInput) {
-        modelSearchInput.focus();
-      }
-    });
-    modelPopover.addEventListener("click", (e) => {
-      const target = e.target.closest(".model-item");
-      if (target) {
-        e.preventDefault();
-        const selectedModelId = target.dataset.modelId;
-        modelSelectorBtn.textContent = selectedModelId;
-        appSettings.defaultModel = selectedModelId;
-        modelPopover.style.display = "none";
-        // Actualizar el select del modal de configuración
-        if (defaultModelSelect) {
-          defaultModelSelect.value = selectedModelId;
-        }
-
-        // Mostrar toast de SweetAlert2
-        Swal.fire({
-          toast: true,
-          position: "top-end",
-          showConfirmButton: false,
-          timer: 3000,
-          timerProgressBar: true,
-          icon: "success",
-          theme: "dark",
-          title: `Modelo seleccionado: ${selectedModelId}`,
-        });
-      }
-    });
-    settingsModal.addEventListener("show.bs.modal", () => {
-      // Asegurarse de que el tema y las notificaciones se muestren correctamente
-      themeSelector.querySelectorAll('input[name="theme"]').forEach((input) => {
-        if (input.value === appSettings.theme) {
-          input.checked = true;
-        }
       });
-      notificationsSwitch.checked = appSettings.notifications;
-      if (defaultModelSelect) {
-        defaultModelSelect.value = appSettings.defaultModel;
-      }
-    });
-    saveSettingsBtn.addEventListener("click", saveSettings);
+      // ▲▲▲ FIN DEL NUEVO CÓDIGO ▲▲▲
   }
+}
 
   // --- INICIALIZACIÓN ---
   initialize();

@@ -24,13 +24,13 @@
 <div class="d-flex vh-100">
     <!-- ================================== SIDEBAR ================================== -->
     <nav id="sidebar" class="d-flex flex-column p-3">
-        <!-- <a href="/" class="d-flex align-items-center text-white text-decoration-none">
-            <span class="fs-4">Kipux AI</span>
-        </a> -->
-        <h2 class="">Kipux AI</h2>
-        <!-- <hr> -->
-        <button id="new-chat-btn" class="btn btn-outline-light w-100 mb-3"><i class="bi bi-chat-square-text-fill"></i> Nuevo Chat</button>
-       
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="mb-0 fs-4">Kipux AI</h2>
+            <a href="#" id="new-chat-btn" class="text-decoration-none" title="Nuevo Chat">
+                <i class="bi bi-pencil-square"></i>
+            </a>
+        </div>
+      
         <div class="flex-grow-1 overflow-auto">
             <h6 class="text-muted small text-uppercase">Conversaciones</h6>
             <ul class="nav nav-pills flex-column mb-auto" id="chat-history">
@@ -68,6 +68,21 @@
                  <button class="btn btn-dark dropdown-toggle" type="button" id="model-selector-btn">Seleccionando modelo...</button>
                 <div id="model-popover" class="model-popover-panel shadow"></div>
             </div>
+            <div class="flex-grow-1"></div>
+
+            <!-- ▼▼▼ CONTENEDOR DE CRÉDITOS Y PRESUPUESTO ▼▼▼ -->
+            <div id="credits-display" class="d-flex align-items-center me-3" 
+                data-bs-toggle="tooltip" 
+                data-bs-placement="bottom" 
+                title="Cargando detalles del presupuesto...">
+
+                <!-- Icono de la moneda -->
+                <i class="bi bi-coin me-2"></i>
+                
+                <!-- Span donde se mostrará el crédito restante -->
+                <span id="credits-counter">Cargando créditos...</span>
+            </div>
+
         </header>
 
         <!-- ======================= INICIO: BLOQUE HTML AJUSTADO ======================= -->
@@ -81,34 +96,49 @@
             <!-- CONTENEDOR DE MENSAJES: Oculto al inicio -->
             <div id="chat-box" class="w-100 h-100 overflow-auto p-3"></div>
 
-            <!-- FORMULARIO: Este es el único otro elemento visible en la vista inicial -->
-            <div id="chat-form-wrapper" class="w-100 px-3 pb-3">
-                <div id="chat-form-container" class="mx-auto">
-                    <form id="chat-form" class="position-relative">
-                        <!-- Menú de Subida (sin cambios) -->
+            <!-- ======================= INICIO: BLOQUE HTML REESTRUCTURADO ======================= -->
+             <div id="chat-form-wrapper"> 
+                <form id="chat-form">
+                    <div class="position-relative">
+                        <!-- El menú de subida se queda aquí, relativo a este contenedor -->
                         <div id="upload-menu" class="upload-menu-panel shadow">
-                            <!-- ...items del menú... -->
+                            <a href="#" class="upload-item" data-action="upload-doc"><i class="bi bi-paperclip me-2"></i>Subir documento</a>
+                            <a href="#" class="upload-item" data-action="upload-img"><i class="bi bi-image me-2"></i>Subir imagen</a>
+                            <a href="#" class="upload-item" data-action="upload-aud"><i class="bi bi-play me-2"></i>Subir audio</a>
                         </div>
-                        
-                        <div class="position-relative">
-                            <!-- Contenedor de botones flotantes (sin cambios) -->
-                            <div id="mode-buttons-container">
-                                <button type="button" id="search-toggle-btn" class="btn btn-mode">
+
+                        <!-- El "input-group" ahora es el contenedor principal y se comportará como una columna -->
+                        <div class="input-group">
+                            
+                            <!-- 1. TEXTAREA: Ahora está solo arriba. Le quitamos las clases de form-control por ahora. -->
+                            <textarea id="user-input" placeholder="Escribe un mensaje..." autocomplete="off"></textarea>
+
+                            <!-- 2. FILA DE ACCIONES: Un nuevo div para alinear todos los botones horizontalmente -->
+                            <div id="input-actions-row" class="d-flex align-items-center w-100 mt-2">
+                                <button class="btn" type="button" id="upload-btn" title="Subir archivo">
+                                    <i class="bi bi-plus-lg"></i>
+                                </button>
+                                
+                    
+                                
+                                <!-- BOTÓN "BUSCAR" MOVIDO AQUÍ -->
+                                <button type="button" id="search-toggle-btn" class="btn btn-mode ms-2">
                                     <i class="bi bi-globe"></i> Buscar
                                 </button>
-                            </div>
 
-                            <!-- Input principal con botones -->
-                            <div class="input-group">
-                                <button class="btn" type="button" id="upload-btn"><i class="bi bi-plus-lg"></i></button>
-                                <!-- AQUÍ ESTÁ EL CAMBIO: El texto de ayuda va en el placeholder -->
-                                <textarea id="user-input" class="form-control" placeholder="¿Cómo puedo ayudarte hoy?" autocomplete="off"></textarea>
-                                <button class="btn" type="submit" id="send-btn"><i class="bi bi-arrow-up-circle-fill"></i></button>
+                                <!-- Un espaciador para empujar el botón de enviar a la derecha -->
+                                <div class="flex-grow-1"></div>
+
+                                <button class="btn" type="submit" id="send-btn" title="Enviar mensaje">
+                                    <i class="bi bi-arrow-up-circle-fill"></i>
+                                </button>
                             </div>
                         </div>
-                    </form>
-                </div>
+                    </div>
+                </form>
             </div>
+
+            <!-- ======================= FIN: BLOQUE HTML REESTRUCTURADO ========================== -->
             
             <!-- Input oculto para la subida de archivos (se mantiene igual) -->
             <input type="file" id="file-input" class="d-none">
